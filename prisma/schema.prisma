@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client"
+  output          = "./generated"
+  engineType      = "client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Enable pgvector extension
+// Run: CREATE EXTENSION IF NOT EXISTS vector;
+
+model User {
+  id    String @id @default(uuid())
+  email String @unique
+
+  kols Kol[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Kol {
+  id             String   @id @default(uuid())
+  userId         String
+  name           String
+  username       String
+  socialMediaType String  // e.g., "instagram", "threads", "reels"
+  niche          String? // e.g., "fashion", "tech", "food"
+  followers      Int      @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  posts Post[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([niche])
+  @@map("kols")
+}
+
+model Post {
+  id            String   @id @default(uuid())
+  kolId         String
+  platform      String   // e.g., "instagram", "threads", "reels"
+  caption       String?
+  hashtags      String[] @default([])
+  transcript    String?  // Audio transcript from video
+  visualSummary String? // Optional visual description
+  likes         Int      @default(0)
+  comments      Int      @default(0)
+  embedding     Unsupported("vector(1024)")? // pgvector embedding (1024 dimensions for Ollama mxbai-embed-large)
+
+  kol Kol @relation(fields: [kolId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([kolId])
+  @@index([platform])
+  @@index([createdAt])
+  @@map("posts")
+}
