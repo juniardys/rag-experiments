@@ -5,6 +5,7 @@ import { DynamicStructuredTool } from '@langchain/core/tools';
 import { ConfigService } from '../config/config.service';
 import { ExecutorService } from '../executor/executor.service';
 import { createTools } from '../tools/tools.module';
+import { buildTraceConfig } from '../observability/langsmith';
 
 @Injectable()
 export class AiMarketingService {
@@ -139,6 +140,13 @@ IMPORTANT: You can call tools multiple times in sequence if needed. After gettin
     this.logger.debug(`Processing query for user ${userId}: ${query}`);
 
     try {
+      const traceConfig =
+        buildTraceConfig(this.configService, {
+          userId,
+          query,
+          service: 'ai-marketing',
+        }) || {};
+
       // Create tools with userId context
       const rawTools = createTools(this.executor, userId);
 
@@ -154,9 +162,12 @@ IMPORTANT: You can call tools multiple times in sequence if needed. After gettin
       });
 
       // Start stream - LangChain handles tool execution automatically
-      const stream = await agent.stream({
-        messages: [{ role: 'user', content: query }],
-      });
+      const stream = await agent.stream(
+        {
+          messages: [{ role: 'user', content: query }],
+        },
+        traceConfig,
+      );
 
       let finalResponse = '';
       let stepCount = 0;

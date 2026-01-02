@@ -33,5 +33,21 @@ export class ConfigService {
   get port(): number {
     return parseInt(process.env.PORT || '3000', 10);
   }
+
+  get langsmithTracing(): boolean {
+    return (process.env.LANGSMITH_TRACING || 'false').toLowerCase() === 'true';
+  }
+
+  get langsmithEndpoint(): string | undefined {
+    return process.env.LANGSMITH_ENDPOINT;
+  }
+
+  get langsmithApiKey(): string | undefined {
+    return process.env.LANGSMITH_API_KEY;
+  }
+
+  get langsmithProject(): string | undefined {
+    return process.env.LANGSMITH_PROJECT;
+  }
 }
 
